@@ -68,7 +68,7 @@ public class HandledScreenMixin {
     }
 
     @Inject(method = "drawSlot", at = @At("TAIL"))
-    public void onDrawSlot(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+    public void onDrawSlot(DrawContext context, Slot slot, CallbackInfo ci) {
         if (searchField == null || searchField.getText().isEmpty()) return;
         ItemStack item = slot.getStack();
 
