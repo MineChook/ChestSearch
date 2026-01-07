@@ -1,14 +1,12 @@
 package site.minechook.chestsearch.mixin;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.Generic3x3ContainerScreen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
@@ -67,8 +65,8 @@ public class HandledScreenMixin {
         if (!lastSearched.equals(searchField.getText())) lastSearched = searchField.getText().toLowerCase();
     }
 
-    @Inject(method = "drawSlot", at = @At("TAIL"))
-    public void onDrawSlot(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+    @Inject(method = "drawSlot", at = @At("TAIL"), require = 0)
+    public void onDrawSlot(DrawContext context, Slot slot, CallbackInfo ci) {
         if (searchField == null || searchField.getText().isEmpty()) return;
         ItemStack item = slot.getStack();
 
@@ -80,28 +78,28 @@ public class HandledScreenMixin {
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    public void onKeyPress(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true, require = 0)
+    public void onKeyPress(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         if (searchField.isFocused()) {
-            if (input.getKeycode() == InputUtil.GLFW_KEY_BACKSPACE) {
+            if (keyCode == InputUtil.GLFW_KEY_BACKSPACE) {
                 if (searchField.getText().isEmpty()) return;
                 searchField.setText(searchField.getText().substring(0, searchField.getText().length() - 1));
                 cir.setReturnValue(true);
             }
-            else if (input.getKeycode() == InputUtil.GLFW_KEY_ESCAPE) {
+            else if (keyCode == InputUtil.GLFW_KEY_ESCAPE) {
                 return;
             }
             else {
-                if (input.getKeycode() > 90) return;
-                searchField.setText(searchField.getText() + KeyEvent.getKeyText(input.getKeycode()).toLowerCase());
+                if (keyCode > 90) return;
+                searchField.setText(searchField.getText() + KeyEvent.getKeyText(keyCode).toLowerCase());
                 cir.setReturnValue(true);
             }
         }
     }
 
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    public void onMouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        if (click.x() > searchField.getX() && click.x() < searchField.getX() + searchField.getWidth() && click.y() > searchField.getY() && click.y() < searchField.getY() + searchField.getHeight()) {
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
+    public void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+        if (mouseX > searchField.getX() && mouseX < searchField.getX() + searchField.getWidth() && mouseY > searchField.getY() && mouseY < searchField.getY() + searchField.getHeight()) {
             searchField.setFocused(true);
             cir.setReturnValue(true);
         }
