@@ -1,5 +1,6 @@
 package site.minechook.chestsearch.mixin;
 
+import net.minecraft.block.entity.DispenserBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -37,7 +38,7 @@ public class HandledScreenMixin {
 
     private boolean isChestScreen() {
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
-        return screen instanceof Generic3x3ContainerScreen || screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
+        return screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
     }
 
     private TextFieldWidget searchField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 100, 15, Text.literal("Search"));
