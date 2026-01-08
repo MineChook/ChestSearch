@@ -37,7 +37,7 @@ public class HandledScreenMixin {
 
     private boolean isChestScreen() {
         HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
-        return screen instanceof Generic3x3ContainerScreen || screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
+        return screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
     }
 
     private TextFieldWidget searchField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 100, 15, Text.literal("Search"));
@@ -68,7 +68,7 @@ public class HandledScreenMixin {
     }
 
     @Inject(method = "drawSlot", at = @At("TAIL"))
-    public void onDrawSlot(DrawContext context, Slot slot, CallbackInfo ci) {
+    public void onDrawSlot(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         if (searchField == null || searchField.getText().isEmpty()) return;
         ItemStack item = slot.getStack();
 
