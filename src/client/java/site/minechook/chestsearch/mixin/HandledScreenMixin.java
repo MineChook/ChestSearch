@@ -38,7 +38,7 @@ public class HandledScreenMixin {
         return screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
     }
 
-    private TextFieldWidget searchField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 100, 15, Text.literal("Search"));
+    private TextFieldWidget searchField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 100, 15, Text.literal("Search"));
 
     @Inject(method = "init", at = @At("TAIL"))
     public void onInit(CallbackInfo ci) {
