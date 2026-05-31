@@ -5,8 +5,8 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class ChestSearchModMenuApiImpl implements ModMenuApi {
 
@@ -21,20 +21,20 @@ public class ChestSearchModMenuApiImpl implements ModMenuApi {
 
     private Screen createConfigScreen(Screen parent) {
         ConfigBuilder builder = ConfigBuilder.create()
-                .setTitle(Text.of("Chest Search"))
+                .setTitle(Component.literal("Chest Search"))
                 .setParentScreen(parent);
 
         builder.setSavingRunnable(ChestSearchClient::saveConfig);
 
-        ConfigCategory main = builder.getOrCreateCategory(Text.of("Main"));
+        ConfigCategory main = builder.getOrCreateCategory(Component.literal("Main"));
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        main.addEntry(entryBuilder.startBooleanToggle(Text.of("Enable"), true).setDefaultValue(true)
+        main.addEntry(entryBuilder.startBooleanToggle(Component.literal("Enable"), true).setDefaultValue(true)
                 .setSaveConsumer(enabled -> ChestSearchClient.enabled = enabled)
                 .build());
 
-        main.addEntry(entryBuilder.startAlphaColorField(Text.of("Color"), ChestSearchClient.color)
+        main.addEntry(entryBuilder.startAlphaColorField(Component.literal("Color"), ChestSearchClient.color)
                 .setDefaultValue(0x506EEB85)
                 .setSaveConsumer(color -> ChestSearchClient.color = color)
                 .build());

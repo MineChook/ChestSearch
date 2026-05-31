@@ -1,108 +1,132 @@
 package site.minechook.chestsearch.mixin;
 
-import net.minecraft.block.entity.DispenserBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.Generic3x3ContainerScreen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import site.minechook.chestsearch.client.ChestSearchClient;
+import net.minecraft.client.input.KeyEvent;
 
-import java.awt.event.KeyEvent;
+import java.util.Objects;
 
-@Mixin(value = HandledScreen.class, priority = 101)
+@Mixin(value = AbstractContainerScreen.class, priority = 101)
 public class HandledScreenMixin {
 
     @Shadow
-    protected int backgroundWidth;
+    protected int imageWidth;
     @Shadow
-    protected int x;
+    protected int leftPos;
     @Shadow
-    protected int y;
+    protected int topPos;
 
-    String lastSearched = "";
+    @Unique
+    EditBox searchField;
 
+    @Unique
     private boolean isChestScreen() {
-        HandledScreen<?> screen = (HandledScreen<?>) (Object) this;
-        return screen instanceof GenericContainerScreen || screen instanceof ShulkerBoxScreen;
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        return screen instanceof ContainerScreen || screen instanceof ShulkerBoxScreen;
     }
-
-    private TextFieldWidget searchField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 100, 15, Text.literal("Search"));
 
     @Inject(method = "init", at = @At("TAIL"))
     public void onInit(CallbackInfo ci) {
+        searchField = new EditBox(Minecraft.getInstance().font, 100, 15, Component.literal("Search"));
         searchField.setMaxLength(20);
-        searchField.setDrawsBackground(true);
         searchField.setEditable(true);
         searchField.setVisible(true);
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    public void onRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    @Inject(method = "extractContents", at = @At("TAIL"))
+    public void onRender(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float deltaTicks, CallbackInfo ci) {
 
         if (!ChestSearchClient.enabled) return;
 
         if (!isChestScreen()) return;
 
-        assert searchField != null;
+        searchField.setX(this.leftPos + this.imageWidth - searchField.getWidth() - 4);
+        searchField.setY(this.topPos + searchField.getHeight() - 14);
 
-        searchField.setX(this.x + this.backgroundWidth - searchField.getWidth() - 4);
-        searchField.setY(this.y + searchField.getHeight() - 14);
-
-        searchField.render(context, mouseX, mouseY, deltaTicks);
-
-        if (!lastSearched.equals(searchField.getText())) lastSearched = searchField.getText().toLowerCase();
+        searchField.extractWidgetRenderState(graphics, mouseX, mouseY, deltaTicks);
     }
 
-    @Inject(method = "drawSlot", at = @At("TAIL"))
-    public void onDrawSlot(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
-        if (searchField == null || searchField.getText().isEmpty()) return;
-        ItemStack item = slot.getStack();
+    @Inject(method = "extractSlot", at = @At("TAIL"))
+    public void onExtractSlot(final GuiGraphicsExtractor graphics, final Slot slot, final int mouseX, final int mouseY, CallbackInfo ci) {
+        if (searchField.getValue().isEmpty()) return;
+        ItemStack item = slot.getItem();
 
         if (item.isEmpty()) return;
 
-        if (item.getName().toString().toLowerCase().contains(lastSearched)) {
-            context.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, ChestSearchClient.color);
+        if (item.getHoverName().getString().toLowerCase().contains(searchField.getValue().toLowerCase())) {
+            graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, ChestSearchClient.color);
+            return;
+        }
+
+        ItemEnchantments enchantments = item.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        for (Holder<Enchantment> enchantmentHolder : enchantments.keySet()) {
+            String enchantName = Enchantment.getFullname(enchantmentHolder, enchantments.getLevel(enchantmentHolder))
+                    .getString()
+                    .toLowerCase();
+
+            if (enchantName.contains(searchField.getValue().toLowerCase())) {
+                graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, ChestSearchClient.color);
+                return;
+            }
+        }
+
+        ItemEnchantments bookEnchantments = item.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
+        for (Holder<Enchantment> enchantmentHolder : bookEnchantments.keySet()) {
+            String enchantName = Enchantment.getFullname(enchantmentHolder, bookEnchantments.getLevel(enchantmentHolder))
+                    .getString()
+                    .toLowerCase();
+
+            if (enchantName.contains(searchField.getValue().toLowerCase())) {
+                graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, ChestSearchClient.color);
+                return;
+            }
         }
     }
 
-    @SuppressWarnings("UnnecessaryReturnStatement")
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    public void onKeyPress(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
+    public void onKeyPressed(final KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
         if (searchField.isFocused()) {
-            if (input.getKeycode() == InputUtil.GLFW_KEY_BACKSPACE) {
-                if (searchField.getText().isEmpty()) return;
-                searchField.setText(searchField.getText().substring(0, searchField.getText().length() - 1));
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                if (searchField.getValue().isEmpty()) return;
+                searchField.setValue(searchField.getValue().substring(0, searchField.getValue().length() - 1));
                 cir.setReturnValue(true);
             }
-            else if (input.getKeycode() == InputUtil.GLFW_KEY_ESCAPE) {
-                return;
+            else if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+                searchField.setFocused(false);
             }
             else {
-                if (input.getKeycode() > 90) return;
-                searchField.setText(searchField.getText() + KeyEvent.getKeyText(input.getKeycode()).toLowerCase());
+                if (event.key() > 90) return;
+                searchField.setValue(searchField.getValue() + Objects.requireNonNull(GLFW.glfwGetKeyName(event.key(), event.scancode())).toLowerCase());
                 cir.setReturnValue(true);
             }
         }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    public void onMouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        if (click.x() > searchField.getX() && click.x() < searchField.getX() + searchField.getWidth() && click.y() > searchField.getY() && click.y() < searchField.getY() + searchField.getHeight()) {
+    public void onMouseClicked(final MouseButtonEvent event, final boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        if (event.x() > searchField.getX() && event.x() < searchField.getX() + searchField.getWidth() && event.y() > searchField.getY() && event.y() < searchField.getY() + searchField.getHeight()) {
             searchField.setFocused(true);
             cir.setReturnValue(true);
         }
