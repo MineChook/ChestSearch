@@ -12,11 +12,11 @@ import java.io.IOException;
 public class ChestSearchClient implements ClientModInitializer {
 
     public static class Config {
-        public int color = 0x506EEB85;
+        public int color = 0x70FF796D;
         public boolean enabled = true;
     }
 
-    public static int color = 0x506EEB85;
+    public static int color = 0x70FF796D;
     public static boolean enabled = true;
 
     @Override
