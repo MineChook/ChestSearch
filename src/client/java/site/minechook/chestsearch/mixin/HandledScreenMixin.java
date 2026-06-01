@@ -116,6 +116,9 @@ public class HandledScreenMixin {
             else if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
                 searchField.setFocused(false);
             }
+            else if (event.key() == GLFW.GLFW_KEY_SPACE) {
+                searchField.setValue(searchField.getValue() + " ");
+            }
             else {
                 if (event.key() > 90) return;
                 searchField.setValue(searchField.getValue() + Objects.requireNonNull(GLFW.glfwGetKeyName(event.key(), event.scancode())).toLowerCase());
