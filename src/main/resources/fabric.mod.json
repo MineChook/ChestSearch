@@ -35,7 +35,7 @@
   "custom": {
     "modmenu": {
       "links": {
-        "modmenu.discord": "https://discord.gg/jEGF5fb"
+        "modmenu.modrinth": "https://modrinth.com/mod/chest-search-bar"
       },
       "update_checker": true
     }
