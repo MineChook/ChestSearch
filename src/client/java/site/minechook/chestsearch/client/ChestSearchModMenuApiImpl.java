@@ -30,8 +30,11 @@ public class ChestSearchModMenuApiImpl implements ModMenuApi {
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        main.addEntry(entryBuilder.startBooleanToggle(Component.literal("Enable"), true).setDefaultValue(true)
+        main.addEntry(entryBuilder.startBooleanToggle(Component.literal("Enable"), ChestSearchClient.enabled).setDefaultValue(true)
                 .setSaveConsumer(enabled -> ChestSearchClient.enabled = enabled)
+                .build());
+        main.addEntry(entryBuilder.startBooleanToggle(Component.literal("Exit Immediately"), ChestSearchClient.exitImmediately).setDefaultValue(false)
+                .setSaveConsumer(exitImmediately -> ChestSearchClient.exitImmediately = exitImmediately)
                 .build());
 
         main.addEntry(entryBuilder.startAlphaColorField(Component.literal("Color"), ChestSearchClient.color)

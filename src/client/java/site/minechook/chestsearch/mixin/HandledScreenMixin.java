@@ -22,12 +22,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import site.minechook.chestsearch.client.ChestSearchClient;
-import site.minechook.chestsearch.client.SearchFieldScreen;
 import net.minecraft.client.input.KeyEvent;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-@Mixin(value = AbstractContainerScreen.class, priority = 2000)
-public class HandledScreenMixin implements SearchFieldScreen {
+
+@Mixin(value = AbstractContainerScreen.class, priority = 101)
+public class HandledScreenMixin {
 
     @Shadow
     protected int imageWidth;
@@ -38,6 +42,13 @@ public class HandledScreenMixin implements SearchFieldScreen {
 
     @Unique
     EditBox searchField;
+
+    Callable<Boolean> focusBox = () -> {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        Thread.sleep(40);
+        screen.setFocused(searchField);
+        return true;
+    };
 
     @Unique
     private boolean isChestScreen() {
@@ -109,25 +120,21 @@ public class HandledScreenMixin implements SearchFieldScreen {
 
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
         if (ChestSearchClient.FOCUS_SEARCH_KEY.matches(event)) {
-            screen.setFocused(searchField);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Boolean> future = executor.submit(focusBox);
             cir.setReturnValue(true);
         } else if (searchField.isFocused()) {
-            if (event.isEscape()) screen.setFocused(null);
+            if (event.isEscape()) {
+                if (!ChestSearchClient.exitImmediately) {
+                    screen.setFocused(null);
+                }
+                else {
+                    screen.onClose();
+                }
+            }
             else searchField.keyPressed(event);
             cir.setReturnValue(true);
         }
-    }
-
-    @Override
-    public boolean chestsearch$isSearchFocused() {
-        return searchField != null && searchField.isFocused();
-    }
-
-    @Override
-    public void chestsearch$handleSearchKey(final KeyEvent event) {
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
-        if (event.isEscape()) screen.setFocused(null);
-        else searchField.keyPressed(event);
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
