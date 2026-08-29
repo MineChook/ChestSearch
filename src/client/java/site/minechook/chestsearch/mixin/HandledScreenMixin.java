@@ -14,7 +14,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -25,7 +24,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import site.minechook.chestsearch.client.ChestSearchClient;
 import net.minecraft.client.input.KeyEvent;
 
-import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 
 @Mixin(value = AbstractContainerScreen.class, priority = 101)
 public class HandledScreenMixin {
@@ -39,6 +42,13 @@ public class HandledScreenMixin {
 
     @Unique
     EditBox searchField;
+
+    Callable<Boolean> focusBox = () -> {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        Thread.sleep(40);
+        screen.setFocused(searchField);
+        return true;
+    };
 
     @Unique
     private boolean isChestScreen() {
@@ -106,32 +116,36 @@ public class HandledScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     public void onKeyPressed(final KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (searchField.isFocused()) {
-            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
-                if (searchField.getValue().isEmpty()) return;
-                searchField.setValue(searchField.getValue().substring(0, searchField.getValue().length() - 1));
-                cir.setReturnValue(true);
+        if (!isChestScreen() || !ChestSearchClient.enabled || searchField == null) return;
+
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        if (ChestSearchClient.FOCUS_SEARCH_KEY.matches(event)) {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Boolean> future = executor.submit(focusBox);
+            cir.setReturnValue(true);
+        } else if (searchField.isFocused()) {
+            if (event.isEscape()) {
+                if (!ChestSearchClient.exitImmediately) {
+                    screen.setFocused(null);
+                }
+                else {
+                    screen.onClose();
+                }
             }
-            else if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
-                searchField.setFocused(false);
-            }
-            else if (event.key() == GLFW.GLFW_KEY_SPACE) {
-                searchField.setValue(searchField.getValue() + " ");
-            }
-            else {
-                if (event.key() > 90) return;
-                searchField.setValue(searchField.getValue() + Objects.requireNonNull(GLFW.glfwGetKeyName(event.key(), event.scancode())).toLowerCase());
-                cir.setReturnValue(true);
-            }
+            else searchField.keyPressed(event);
+            cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     public void onMouseClicked(final MouseButtonEvent event, final boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        if (!isChestScreen() || !ChestSearchClient.enabled || searchField == null) return;
+
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
         if (event.x() > searchField.getX() && event.x() < searchField.getX() + searchField.getWidth() && event.y() > searchField.getY() && event.y() < searchField.getY() + searchField.getHeight()) {
-            searchField.setFocused(true);
+            screen.setFocused(searchField);
             cir.setReturnValue(true);
         }
-        else searchField.setFocused(false);
+        else screen.setFocused(null);
     }
 }

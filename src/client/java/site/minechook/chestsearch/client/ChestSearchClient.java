@@ -3,6 +3,10 @@ package site.minechook.chestsearch.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.Identifier;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
 import java.io.FileReader;
@@ -11,13 +15,21 @@ import java.io.IOException;
 
 public class ChestSearchClient implements ClientModInitializer {
 
+    public static final KeyMapping FOCUS_SEARCH_KEY = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.chestsearch.focus_search",
+            GLFW.GLFW_KEY_UNKNOWN,
+            KeyMapping.Category.register(Identifier.fromNamespaceAndPath("chestsearch", "general"))
+    ));
+
     public static class Config {
         public int color = 0x70FF796D;
         public boolean enabled = true;
+        public boolean exitImmediately = false;
     }
 
     public static int color = 0x70FF796D;
     public static boolean enabled = true;
+    public static boolean exitImmediately = false;
 
     @Override
     public void onInitializeClient() {
@@ -32,6 +44,7 @@ public class ChestSearchClient implements ClientModInitializer {
             Config config = new Config();
             config.color = color;
             config.enabled = enabled;
+            config.exitImmediately = exitImmediately;
             gson.toJson(config, writer);
         } catch (IOException e) {
             System.err.println("Failed to save config: " + e.getMessage());
@@ -48,6 +61,7 @@ public class ChestSearchClient implements ClientModInitializer {
                 if (config != null) {
                     color = config.color;
                     enabled = config.enabled;
+                    exitImmediately = config.exitImmediately;
                 }
             } catch (IOException e) {
                 System.err.println("Failed to load config: " + e.getMessage());
