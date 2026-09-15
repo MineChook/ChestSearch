@@ -6,7 +6,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
 import java.io.FileReader;
@@ -17,7 +16,7 @@ public class ChestSearchClient implements ClientModInitializer {
 
     public static final KeyMapping FOCUS_SEARCH_KEY = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.chestsearch.focus_search",
-            GLFW.GLFW_KEY_UNKNOWN,
+            -1,
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("chestsearch", "general"))
     ));
 
