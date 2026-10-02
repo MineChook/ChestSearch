@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "ChestSearch",
   "description": "",
-  "authors": [],
+  "authors": ["Minechook"],
   "contact": {},
   "license": "MIT",
   "icon": "assets/chestsearch/icon.png",
