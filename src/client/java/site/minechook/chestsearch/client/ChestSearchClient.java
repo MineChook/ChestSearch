@@ -2,6 +2,7 @@ package site.minechook.chestsearch.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
@@ -16,7 +17,7 @@ public class ChestSearchClient implements ClientModInitializer {
 
     public static final KeyMapping FOCUS_SEARCH_KEY = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.chestsearch.focus_search",
-            -1,
+            InputConstants.UNKNOWN.getValue(),
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("chestsearch", "general"))
     ));
 
